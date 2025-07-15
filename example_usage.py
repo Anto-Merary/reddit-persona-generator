@@ -72,10 +72,10 @@ def example_batch_analysis():
                 'status': 'success'
             })
             
-            print(f"✓ Successfully generated persona for {username}")
+            print(f"[SUCCESS] Successfully generated persona for {username}")
             
         except Exception as e:
-            print(f"✗ Error processing {user_url}: {e}")
+            print(f"[ERROR] Error processing {user_url}: {e}")
             results.append({
                 'username': 'unknown',
                 'url': user_url,
@@ -197,20 +197,20 @@ def example_error_handling():
         try:
             # Try to extract username
             username = generator.extract_username_from_url(test_url)
-            print(f"✓ Username extracted: {username}")
+            print(f"[SUCCESS] Username extracted: {username}")
             
             # Try to generate persona
             result = generator.generate_persona_from_url(test_url)
             
             if 'error' in result:
-                print(f"⚠ Generated report with errors: {result['error'][:100]}...")
+                print(f"[WARNING] Generated report with errors: {result['error'][:100]}...")
             else:
-                print("✓ Successfully generated persona report")
+                print("[SUCCESS] Successfully generated persona report")
                 
         except ValueError as e:
-            print(f"✗ URL parsing error: {e}")
+            print(f"[ERROR] URL parsing error: {e}")
         except Exception as e:
-            print(f"✗ General error: {e}")
+            print(f"[ERROR] General error: {e}")
     
     print()
 
@@ -226,7 +226,7 @@ def main():
         os.getenv('REDDIT_CLIENT_ID'),
         os.getenv('REDDIT_CLIENT_SECRET')
     ]):
-        print("⚠ Warning: Reddit API credentials not found in .env file")
+        print("[WARNING] Reddit API credentials not found in .env file")
         print("Some examples may not work without valid credentials")
         print("Please set up your .env file with valid Reddit API credentials")
         print()

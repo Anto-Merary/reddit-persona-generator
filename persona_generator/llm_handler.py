@@ -90,7 +90,7 @@ class LLMHandler:
             if self.tokenizer.pad_token is None:
                 self.tokenizer.pad_token = self.tokenizer.eos_token
             
-            self.logger.info("✓ Tokenizer loaded successfully")
+            self.logger.info("[SUCCESS] Tokenizer loaded successfully")
             
         except Exception as e:
             self.logger.error(f"Error loading tokenizer: {e}")
@@ -123,7 +123,7 @@ class LLMHandler:
                     low_cpu_mem_usage=True
                 )
                 
-                self.logger.info("✓ Model loaded successfully with 4-bit quantization on GPU")
+                self.logger.info("[SUCCESS] Model loaded successfully with 4-bit quantization on GPU")
                 self.device = "cuda"
                 return
                 
@@ -142,7 +142,7 @@ class LLMHandler:
                     low_cpu_mem_usage=True
                 )
                 
-                self.logger.info("✓ Model loaded successfully on GPU without quantization")
+                self.logger.info("[SUCCESS] Model loaded successfully on GPU without quantization")
                 self.device = "cuda"
                 return
                 
@@ -158,7 +158,7 @@ class LLMHandler:
                 trust_remote_code=True
             )
             
-            self.logger.info("✓ Model loaded successfully on CPU")
+            self.logger.info("[SUCCESS] Model loaded successfully on CPU")
             self.device = "cpu"
             
         except Exception as e:

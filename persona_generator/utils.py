@@ -22,14 +22,29 @@ def setup_logging(level: int = logging.INFO) -> logging.Logger:
     Returns:
         Configured logger instance
     """
+    # Configure logging with UTF-8 encoding to handle Unicode characters
+    import sys
+    
+    # Set up console handler with UTF-8 encoding
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(level)
+    
+    # Set up file handler with UTF-8 encoding
+    file_handler = logging.FileHandler('persona_generator.log', encoding='utf-8')
+    file_handler.setLevel(level)
+    
+    # Create formatter
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    console_handler.setFormatter(formatter)
+    file_handler.setFormatter(formatter)
+    
+    # Configure root logger
     logging.basicConfig(
         level=level,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.StreamHandler(),
-            logging.FileHandler('persona_generator.log')
-        ]
+        handlers=[console_handler, file_handler],
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
+    
     return logging.getLogger(__name__)
 
 

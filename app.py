@@ -12,15 +12,27 @@ Features:
 - Comprehensive error handling
 - Health monitoring and system information
 
-Author: AI/LLM Engineer
-Date: 2024
+Author: Anto Merary S
+Date: 2025
 """
 
 import os
+import sys
 import logging
 from datetime import datetime
 from flask import Flask, request, jsonify, render_template_string
 from flask_cors import CORS
+
+# Fix console encoding for Windows
+if sys.platform.startswith('win'):
+    try:
+        # Try to set console to UTF-8 mode
+        import codecs
+        sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'strict')
+        sys.stderr = codecs.getwriter('utf-8')(sys.stderr.buffer, 'strict')
+    except:
+        # Fallback if UTF-8 setup fails
+        pass
 
 # Import our modular components
 from config import Config
@@ -56,11 +68,11 @@ class PersonaGeneratorApp:
         """Initialize the persona generator with error handling."""
         try:
             self.persona_generator = PersonaGenerator()
-            self.logger.info("✓ PersonaGenerator initialized successfully")
+            self.logger.info("[SUCCESS] PersonaGenerator initialized successfully")
         except Exception as e:
-            self.logger.error(f"✗ Error initializing PersonaGenerator: {e}")
+            self.logger.error(f"[ERROR] Error initializing PersonaGenerator: {e}")
             if "protobuf" in str(e).lower():
-                self.logger.error("🚨 PROTOBUF COMPATIBILITY ISSUE DETECTED!")
+                self.logger.error("[WARNING] PROTOBUF COMPATIBILITY ISSUE DETECTED!")
                 self.logger.error("Please ensure you have compatible protobuf version installed")
             self.persona_generator = None
     
@@ -638,10 +650,10 @@ def main():
     app = PersonaGeneratorApp()
     
     print("\nStarting Flask application...")
-    print("🌐 Web Interface: http://localhost:5000")
-    print("📡 API Endpoint: POST /generate_persona")
-    print("💚 Health Check: GET /health")
-    print("📋 API Info: GET /api/info")
+    print("Web Interface: http://localhost:5000")
+    print("API Endpoint: POST /generate_persona")
+    print("Health Check: GET /health")
+    print("API Info: GET /api/info")
     print("\nPress Ctrl+C to stop the server")
     print("=" * 50)
     
@@ -651,7 +663,7 @@ def main():
         print("\n\nShutting down gracefully...")
         if app.persona_generator:
             app.persona_generator.cleanup()
-        print("✓ Application stopped")
+        print("[SUCCESS] Application stopped")
 
 
 if __name__ == "__main__":
