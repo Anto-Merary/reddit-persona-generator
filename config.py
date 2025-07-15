@@ -53,11 +53,8 @@ class Config:
         "top_p": 0.85,  # Reduced from 0.9 for more focused selection
         "top_k": 30,  # Reduced from 50 for more focused selection
         "repetition_penalty": 1.3,  # Increased from 1.1 to reduce repetition
-        "length_penalty": 0.9,  # Reduced from 1.0 to prefer shorter responses
         "use_cache": True,
         "no_repeat_ngram_size": 4,  # Increased from 3 to prevent longer repetitions
-        "early_stopping": True,
-        "num_beams": 1,
         "pad_token_id": None  # Will be set during tokenization
     }
     
@@ -68,11 +65,8 @@ class Config:
         "top_p": 0.8,  # Reduced from 0.85 for more focused quotes
         "top_k": 25,  # Reduced from 40 for more focused quotes
         "repetition_penalty": 1.4,  # Increased from 1.2 to prevent repetitive quotes
-        "length_penalty": 0.7,  # Reduced from 0.8 to favor shorter quotes
         "use_cache": True,
         "no_repeat_ngram_size": 4,  # Increased from 3 to prevent repetitions
-        "early_stopping": True,
-        "num_beams": 1,
         "pad_token_id": None  # Will be set during tokenization
     }
     
