@@ -278,7 +278,7 @@ class LLMHandler:
     
     def _clean_general_response(self, response: str) -> str:
         """Clean general responses with enhanced artifact removal."""
-        # Remove placeholder text and generic instructions
+        # Enhanced artifact patterns - much more comprehensive
         artifact_patterns = [
             'this content is being provided for informational purposes',
             'please check with your local community',
@@ -296,7 +296,22 @@ class LLMHandler:
             'behavioral patterns', 'actually exhibits',
             'working toward', 'actually faces', 'specific frustrations',
             'reddit activity', 'behavior patterns', 'user is',
-            'they are', 'this user', 'based on their'
+            'they are', 'this user', 'based on their',
+            # Additional conversational artifacts
+            'we are', 'we also', 'we want', 'let us know', 'please let me know',
+            'if someone has', 'if you have', 'thank you', 'thanks for',
+            'we hope', 'we think', 'we believe', 'our community',
+            'this article', 'next time', 'right away', 'as well',
+            'would be awesome', 'that would be', 'please correct me',
+            'i think it was', 'if i am wrong', 'correct me',
+            'add them to my list', 'let me know', 'going to do one',
+            'most common questions', 'discuss these types',
+            'community member', 'feedback from', 'excited to hear',
+            'makes sense since', 'some of the most', 'we get',
+            'will see us discuss', 'with our community',
+            'what do you think', 'how do you feel', 'what would you',
+            'do you think', 'do you believe', 'would you like',
+            'what are your thoughts', 'how would you'
         ]
         
         # Remove common repetitive phrases
@@ -324,7 +339,7 @@ class LLMHandler:
             if is_artifact:
                 continue
             
-            # Skip lines that are too short or too repetitive
+            # Skip lines that are too short
             if len(line) < 10:
                 continue
             
@@ -338,6 +353,20 @@ class LLMHandler:
                 # Skip if any word appears more than 2 times
                 if any(count > 2 for count in word_counts.values()):
                     continue
+            
+            # Check for personal pronouns (signs of artifacts)
+            personal_pronouns = ['we ', 'us ', 'our ', 'you ', 'your ', 'i ', 'me ', 'my ']
+            pronoun_count = sum(1 for pronoun in personal_pronouns if pronoun in line_lower)
+            if pronoun_count > 2:
+                continue
+            
+            # Check for excessive enthusiasm or parentheses (artifacts)
+            if line.count('!') > 1 or ('(' in line and ')' in line):
+                continue
+            
+            # Check for quotes within the content (artifacts)
+            if '"' in line or "'" in line:
+                continue
             
             # Remove repetitive phrases from the line
             cleaned_line = line

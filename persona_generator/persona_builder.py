@@ -531,11 +531,22 @@ Format as: Extraversion: X, Sensing: Y, Thinking: Z, Judging: W"""
     
     def _build_behavior(self, context: str) -> Dict:
         """Build behavior aspect of persona."""
-        prompt = f"""Based on this Reddit user's actual behavior patterns, describe their specific behaviors. Be concise and avoid repetition.
+        prompt = f"""Analyze this Reddit user's actual posting patterns and interaction style to identify their specific behaviors. Focus on observable actions.
 
 {context}
 
-List exactly 3-4 distinct behavioral patterns this user exhibits based on their Reddit activity:
+Generate ONLY specific behavioral patterns in this format:
+1. [Specific behavior they demonstrate]
+2. [Another observable pattern]
+3. [Third behavioral trait]
+
+Rules:
+- Each behavior must be 5-15 words
+- Focus on actual actions, not personality traits
+- No conversational language or questions
+- No instructions or meta-commentary
+- Start with number and period
+
 1."""
         
         response = self.llm_handler.generate_text(prompt, max_length=250)
@@ -552,11 +563,22 @@ List exactly 3-4 distinct behavioral patterns this user exhibits based on their 
     
     def _build_frustrations(self, context: str) -> Dict:
         """Build frustrations aspect of persona."""
-        prompt = f"""Based on this Reddit user's actual behavior patterns, identify their specific frustrations. Be concise and avoid repetition.
+        prompt = f"""Analyze this Reddit user's actual posts and comments to identify their specific frustrations. Focus on concrete problems they face.
 
 {context}
 
-List exactly 3-4 distinct frustrations this user faces based on their Reddit activity:
+Generate ONLY specific frustrations in this format:
+1. [Specific problem they encounter]
+2. [Another concrete frustration]
+3. [Third specific issue]
+
+Rules:
+- Each frustration must be 5-15 words
+- Focus on actual problems, not general complaints
+- No conversational language or questions
+- No instructions or meta-commentary
+- Start with number and period
+
 1."""
         
         response = self.llm_handler.generate_text(prompt, max_length=250)
@@ -573,11 +595,22 @@ List exactly 3-4 distinct frustrations this user faces based on their Reddit act
     
     def _build_goals(self, context: str) -> Dict:
         """Build goals aspect of persona."""
-        prompt = f"""Based on this Reddit user's actual behavior patterns, identify their specific goals and needs. Be concise and avoid repetition.
+        prompt = f"""Analyze this Reddit user's actual posts and comments to identify their specific goals and aspirations. Focus on what they want to achieve.
 
 {context}
 
-List exactly 3-4 distinct goals this user is working toward based on their Reddit activity:
+Generate ONLY specific goals in this format:
+1. [Specific goal they want to achieve]
+2. [Another concrete aspiration]
+3. [Third specific objective]
+
+Rules:
+- Each goal must be 5-15 words
+- Focus on actual ambitions, not vague desires
+- No conversational language or questions
+- No instructions or meta-commentary
+- Start with number and period
+
 1."""
         
         response = self.llm_handler.generate_text(prompt, max_length=250)
@@ -670,21 +703,59 @@ Generate ONE authentic quote (8-15 words, natural and conversational):"""
         return items[:5]
     
     def _is_valid_content(self, content: str) -> bool:
-        """Check if content is valid and not an artifact."""
+        """Check if content is valid and not an artifact with enhanced detection."""
         if not content or len(content) < 10:
             return False
         
-        # Check for common artifacts
-        artifacts = [
+        content_lower = content.lower()
+        
+        # Enhanced artifact patterns - instruction/generic language
+        instruction_artifacts = [
             'generate', 'create', 'based on', 'analysis', 'user would',
             'this captures', 'represents', 'reflects', 'critical instructions',
             'format as', 'consider the following', 'detailed analysis',
             'evidence from', 'specific frustrations', 'behavioral patterns',
-            'working toward', 'actually faces', 'exhibits based'
+            'working toward', 'actually faces', 'exhibits based',
+            'list exactly', 'distinct', 'reddit activity'
         ]
         
-        content_lower = content.lower()
-        if any(artifact in content_lower for artifact in artifacts):
+        # Conversational artifacts - LLM talking to user
+        conversational_artifacts = [
+            'we are', 'we also', 'we want', 'let us know', 'please let me know',
+            'if someone has', 'if you have', 'thank you', 'thanks for',
+            'we hope', 'we think', 'we believe', 'our community',
+            'this article', 'next time', 'right away', 'as well',
+            'would be awesome', 'that would be', 'please correct me',
+            'i think it was', 'if i am wrong', 'correct me',
+            'add them to my list', 'let me know', 'going to do one'
+        ]
+        
+        # Question artifacts - LLM asking questions
+        question_artifacts = [
+            'what do you think', 'how do you feel', 'what would you',
+            'do you think', 'do you believe', 'would you like',
+            'what are your thoughts', 'how would you'
+        ]
+        
+        # Meta-commentary artifacts - LLM talking about the process
+        meta_artifacts = [
+            'most common questions', 'discuss these types',
+            'community member', 'feedback from', 'excited to hear',
+            'makes sense since', 'some of the most', 'we get',
+            'will see us discuss', 'with our community'
+        ]
+        
+        # Combine all artifact patterns
+        all_artifacts = instruction_artifacts + conversational_artifacts + question_artifacts + meta_artifacts
+        
+        # Check for artifacts
+        if any(artifact in content_lower for artifact in all_artifacts):
+            return False
+        
+        # Check for first/second person references (signs of LLM artifacts)
+        personal_pronouns = ['we ', 'us ', 'our ', 'you ', 'your ', 'i ', 'me ', 'my ']
+        pronoun_count = sum(1 for pronoun in personal_pronouns if pronoun in content_lower)
+        if pronoun_count > 2:  # Too many personal references
             return False
         
         # Check for excessive repetition
@@ -697,6 +768,22 @@ Generate ONE authentic quote (8-15 words, natural and conversational):"""
             # If any word appears more than 2 times in a short sentence, it's likely repetitive
             if any(count > 2 for count in word_counts.values()):
                 return False
+        
+        # Check for exclamation marks and excessive enthusiasm (often artifacts)
+        if content.count('!') > 1:
+            return False
+        
+        # Check for parenthetical expressions (often artifacts)
+        if '(' in content and ')' in content:
+            return False
+        
+        # Check for quotes within the content (often artifacts)
+        if '"' in content or "'" in content:
+            return False
+        
+        # Check minimum word count for meaningful content
+        if len(words) < 4:
+            return False
         
         return True
     
