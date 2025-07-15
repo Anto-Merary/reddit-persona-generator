@@ -12,8 +12,8 @@ Features:
 - Comprehensive error handling
 - Health monitoring and system information
 
-Author: AI/LLM Engineer
-Date: 2024
+Author: Anto Merary S
+Date: 2025
 """
 
 import os
