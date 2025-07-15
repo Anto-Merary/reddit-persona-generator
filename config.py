@@ -48,25 +48,25 @@ class Config:
     
     # LLM Generation Parameters
     LLM_GENERATION_CONFIG = {
-        "temperature": 0.7,  # Reduced from 0.8 for more focused responses
+        "temperature": 0.5,  # Further reduced for more focused, coherent responses
         "do_sample": True,
-        "top_p": 0.85,  # Reduced from 0.9 for more focused selection
-        "top_k": 30,  # Reduced from 50 for more focused selection
-        "repetition_penalty": 1.3,  # Increased from 1.1 to reduce repetition
+        "top_p": 0.75,  # Further reduced for more focused token selection
+        "top_k": 20,  # Further reduced for more focused selection
+        "repetition_penalty": 1.5,  # Increased further to reduce repetition
         "use_cache": True,
-        "no_repeat_ngram_size": 4,  # Increased from 3 to prevent longer repetitions
+        "no_repeat_ngram_size": 5,  # Increased to prevent longer repetitions
         "pad_token_id": None  # Will be set during tokenization
     }
     
     # Quote Generation Parameters
     QUOTE_GENERATION_CONFIG = {
-        "temperature": 0.75,  # Reduced from 0.9 for more focused quotes
+        "temperature": 0.6,  # Further reduced for more coherent quotes
         "do_sample": True,
-        "top_p": 0.8,  # Reduced from 0.85 for more focused quotes
-        "top_k": 25,  # Reduced from 40 for more focused quotes
-        "repetition_penalty": 1.4,  # Increased from 1.2 to prevent repetitive quotes
+        "top_p": 0.7,  # Further reduced for more focused quotes
+        "top_k": 15,  # Further reduced for more focused quotes
+        "repetition_penalty": 1.6,  # Increased further to prevent repetitive quotes
         "use_cache": True,
-        "no_repeat_ngram_size": 4,  # Increased from 3 to prevent repetitions
+        "no_repeat_ngram_size": 5,  # Increased to prevent repetitions
         "pad_token_id": None  # Will be set during tokenization
     }
     

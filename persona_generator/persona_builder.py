@@ -531,21 +531,23 @@ Format as: Extraversion: X, Sensing: Y, Thinking: Z, Judging: W"""
     
     def _build_behavior(self, context: str) -> Dict:
         """Build behavior aspect of persona."""
-        prompt = f"""Analyze this Reddit user's actual posting patterns and interaction style to identify their specific behaviors. Focus on observable actions.
+        prompt = f"""From this Reddit user's posting patterns and interaction style, identify how they actually behave online.
 
 {context}
 
-Generate ONLY specific behavioral patterns in this format:
-1. [Specific behavior they demonstrate]
-2. [Another observable pattern]
-3. [Third behavioral trait]
+Write exactly 3 specific behavioral patterns this user demonstrates. Each must be:
+- An observable action or habit
+- Something they regularly do
+- Not a posting schedule or instruction
+- Not a question or advice
+- 5-15 words describing the behavior
 
-Rules:
-- Each behavior must be 5-15 words
-- Focus on actual actions, not personality traits
-- No conversational language or questions
-- No instructions or meta-commentary
-- Start with number and period
+Example format:
+Engages in detailed technical discussions with other developers
+Shares personal experiences to help others solve similar problems
+Prefers lurking and reading rather than actively commenting
+
+Now write 3 specific behaviors for this user:
 
 1."""
         
@@ -563,21 +565,23 @@ Rules:
     
     def _build_frustrations(self, context: str) -> Dict:
         """Build frustrations aspect of persona."""
-        prompt = f"""Analyze this Reddit user's actual posts and comments to identify their specific frustrations. Focus on concrete problems they face.
+        prompt = f"""From this Reddit user's actual posts and comments, identify concrete problems they experience. 
 
 {context}
 
-Generate ONLY specific frustrations in this format:
-1. [Specific problem they encounter]
-2. [Another concrete frustration]
-3. [Third specific issue]
+Write exactly 3 specific problems this user faces. Each must be:
+- A concrete difficulty or challenge
+- Something they actually struggle with
+- Not a posting schedule or instruction
+- Not a question or advice
+- 5-15 words describing the problem
 
-Rules:
-- Each frustration must be 5-15 words
-- Focus on actual problems, not general complaints
-- No conversational language or questions
-- No instructions or meta-commentary
-- Start with number and period
+Example format:
+Difficulty finding reliable programming tutorials online
+Struggling with work-life balance in remote positions
+Dealing with outdated documentation for development tools
+
+Now write 3 specific problems for this user:
 
 1."""
         
@@ -595,21 +599,23 @@ Rules:
     
     def _build_goals(self, context: str) -> Dict:
         """Build goals aspect of persona."""
-        prompt = f"""Analyze this Reddit user's actual posts and comments to identify their specific goals and aspirations. Focus on what they want to achieve.
+        prompt = f"""From this Reddit user's actual posts and comments, identify what they want to achieve or accomplish.
 
 {context}
 
-Generate ONLY specific goals in this format:
-1. [Specific goal they want to achieve]
-2. [Another concrete aspiration]
-3. [Third specific objective]
+Write exactly 3 specific goals this user is working toward. Each must be:
+- A concrete objective or aspiration
+- Something they actively want to achieve
+- Not a posting schedule or instruction
+- Not a question or advice
+- 5-15 words describing the goal
 
-Rules:
-- Each goal must be 5-15 words
-- Focus on actual ambitions, not vague desires
-- No conversational language or questions
-- No instructions or meta-commentary
-- Start with number and period
+Example format:
+Build a successful side project using modern frameworks
+Improve coding skills through consistent practice and learning
+Connect with like-minded professionals in the tech industry
+
+Now write 3 specific goals for this user:
 
 1."""
         
@@ -716,7 +722,28 @@ Generate ONE authentic quote (8-15 words, natural and conversational):"""
             'format as', 'consider the following', 'detailed analysis',
             'evidence from', 'specific frustrations', 'behavioral patterns',
             'working toward', 'actually faces', 'exhibits based',
-            'list exactly', 'distinct', 'reddit activity'
+            'list exactly', 'distinct', 'reddit activity',
+            'do not post', 'try to avoid', 'in order to', 'you should',
+            'make sure to', 'remember to', 'be sure to', 'always',
+            'never', 'must', 'should', 'ought to', 'need to'
+        ]
+        
+        # Posting schedule artifacts - LLM generating posting instructions
+        posting_artifacts = [
+            'post every', 'post daily', 'post twice', 'post once',
+            'post only', 'post more than', 'post less than',
+            'before bedtime', 'after 7pm', 'between 10am', 'from 12 am',
+            'till 1 pm', 'until after', 'when you have to',
+            'when you need to', 'weekly question', 'no other answers',
+            'do some research', 'to answer', 'per week', 'per day'
+        ]
+        
+        # Instruction/rule artifacts - LLM giving instructions
+        rule_artifacts = [
+            'avoid repeating', 'repeat yourself', 'unless there is',
+            'reason to believe', 'otherwise', 'get started',
+            'follow these', 'make sure', 'remember that',
+            'important to', 'essential to', 'necessary to'
         ]
         
         # Conversational artifacts - LLM talking to user
@@ -746,7 +773,8 @@ Generate ONE authentic quote (8-15 words, natural and conversational):"""
         ]
         
         # Combine all artifact patterns
-        all_artifacts = instruction_artifacts + conversational_artifacts + question_artifacts + meta_artifacts
+        all_artifacts = (instruction_artifacts + posting_artifacts + rule_artifacts + 
+                        conversational_artifacts + question_artifacts + meta_artifacts)
         
         # Check for artifacts
         if any(artifact in content_lower for artifact in all_artifacts):
@@ -783,6 +811,48 @@ Generate ONE authentic quote (8-15 words, natural and conversational):"""
         
         # Check minimum word count for meaningful content
         if len(words) < 4:
+            return False
+        
+        # Check for incomplete sentences (ending with prepositions or conjunctions)
+        incomplete_endings = ['to', 'from', 'with', 'by', 'for', 'of', 'in', 'on', 'at', 'and', 'or', 'but']
+        last_word = words[-1].lower().rstrip('.,!?;:')
+        if last_word in incomplete_endings:
+            return False
+        
+        # Check for time-based nonsensical patterns
+        time_patterns = ['am', 'pm', 'hour', 'daily', 'weekly', 'bedtime', 'morning', 'evening']
+        if any(pattern in content_lower for pattern in time_patterns):
+            return False
+        
+        # Check for contradictory words in the same sentence
+        contradictory_pairs = [
+            ('once', 'twice'), ('daily', 'weekly'), ('never', 'always'),
+            ('more', 'less'), ('before', 'after'), ('start', 'stop')
+        ]
+        for pair1, pair2 in contradictory_pairs:
+            if pair1 in content_lower and pair2 in content_lower:
+                return False
+        
+        # Check for instruction verbs at the beginning
+        instruction_verbs = ['do', 'try', 'make', 'be', 'get', 'go', 'come', 'take', 'give']
+        first_word = words[0].lower()
+        if first_word in instruction_verbs:
+            return False
+        
+        # Check for numbers at the beginning (often artifacts)
+        if words[0].isdigit():
+            return False
+        
+        # Check for excessive prepositions (sign of confusing content)
+        prepositions = ['to', 'from', 'with', 'by', 'for', 'of', 'in', 'on', 'at', 'between', 'until', 'after', 'before']
+        prep_count = sum(1 for word in words if word.lower() in prepositions)
+        if prep_count > len(words) * 0.3:  # More than 30% prepositions
+            return False
+        
+        # Check for reasonable sentence structure (must have nouns/verbs)
+        has_noun_verb = any(word.lower() in ['user', 'person', 'individual', 'someone', 'people', 'community', 'content', 'discussion', 'information', 'time', 'work', 'project', 'problem', 'solution', 'experience', 'interest', 'skill', 'knowledge', 'learning', 'building', 'sharing', 'creating', 'finding', 'seeking', 'improving', 'developing', 'exploring', 'engaging', 'participating', 'contributing', 'discovering', 'understanding', 'mastering', 'achieving', 'connecting', 'collaborating'] for word in words)
+        
+        if not has_noun_verb:
             return False
         
         return True
