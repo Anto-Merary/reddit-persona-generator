@@ -25,6 +25,16 @@ A professional, modular AI-powered system for generating comprehensive user pers
 
 ## 📦 Architecture Overview
 
+### System Architecture Diagram
+
+<div align="center">
+
+![System Architecture](assets/system_architecture.png)
+
+</div>
+
+### Project Structure
+
 ```
 Reddit-persona/
 ├── app.py                    # 🚀 Main Flask application
