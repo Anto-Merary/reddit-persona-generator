@@ -203,13 +203,16 @@ class LLMHandler:
             if self.device == "cuda":
                 inputs = {k: v.to("cuda") for k, v in inputs.items()}
             
+            # Set pad_token_id if not already set
+            if generation_config.get('pad_token_id') is None:
+                generation_config['pad_token_id'] = self.tokenizer.eos_token_id
+            
             # Generate response
             with torch.no_grad():
                 outputs = self.model.generate(
                     **inputs,
                     max_length=inputs['input_ids'].shape[1] + max_length,
                     num_return_sequences=1,
-                    pad_token_id=self.tokenizer.eos_token_id,
                     **generation_config
                 )
             
@@ -274,34 +277,40 @@ class LLMHandler:
         return response.strip()
     
     def _clean_general_response(self, response: str) -> str:
-        """Clean general responses."""
+        """Clean general responses with enhanced artifact removal."""
         # Remove placeholder text and generic instructions
         artifact_patterns = [
             'this content is being provided for informational purposes',
             'please check with your local community',
-            'set goals by category',
-            'add objectives by year',
+            'set goals by category', 'add objectives by year',
             'include other categories if you have them',
-            'create a user profile that has',
-            'some things to consider',
-            'quote text here',
-            'format as:',
-            'format as',
-            'based on the analysis above',
-            'detailed analysis',
-            'evidence from their behavior',
-            'word cards',
-            'posters that highlight',
-            'customize to give a clear picture',
-            'identify 3-5 specific',
-            'generate 3-5 specific',
-            'critical instructions',
-            'consider the following'
+            'create a user profile that has', 'some things to consider',
+            'quote text here', 'format as:', 'format as',
+            'based on the analysis above', 'detailed analysis',
+            'evidence from their behavior', 'word cards',
+            'posters that highlight', 'customize to give a clear picture',
+            'identify 3-5 specific', 'generate 3-5 specific',
+            'critical instructions', 'consider the following',
+            'you are analyzing', 'based on this user analysis',
+            'generate', 'create', 'list exactly', 'distinct',
+            'behavioral patterns', 'actually exhibits',
+            'working toward', 'actually faces', 'specific frustrations',
+            'reddit activity', 'behavior patterns', 'user is',
+            'they are', 'this user', 'based on their'
+        ]
+        
+        # Remove common repetitive phrases
+        repetitive_patterns = [
+            'the user', 'this person', 'they have', 'they are',
+            'you are', 'you have', 'you can', 'you will',
+            'it is', 'that is', 'this is', 'there is'
         ]
         
         # Filter out lines containing artifacts
         lines = response.split('\n')
         cleaned_lines = []
+        seen_content = set()
+        
         for line in lines:
             line = line.strip()
             line_lower = line.lower()
@@ -309,15 +318,43 @@ class LLMHandler:
             # Skip empty lines
             if not line:
                 continue
-                
+            
             # Skip lines that contain artifact patterns
             is_artifact = any(pattern in line_lower for pattern in artifact_patterns)
             if is_artifact:
                 continue
+            
+            # Skip lines that are too short or too repetitive
+            if len(line) < 10:
+                continue
+            
+            # Check for excessive repetition within the line
+            words = line.split()
+            if len(words) > 3:
+                word_counts = {}
+                for word in words:
+                    word_counts[word] = word_counts.get(word, 0) + 1
                 
-            # Skip repetitive lines
-            if line not in cleaned_lines:
-                cleaned_lines.append(line)
+                # Skip if any word appears more than 2 times
+                if any(count > 2 for count in word_counts.values()):
+                    continue
+            
+            # Remove repetitive phrases from the line
+            cleaned_line = line
+            for pattern in repetitive_patterns:
+                cleaned_line = cleaned_line.replace(pattern, '')
+            
+            # Skip if the line becomes too short after cleaning
+            if len(cleaned_line.strip()) < 10:
+                continue
+            
+            # Check for duplicate content
+            content_key = line_lower[:50]  # Use first 50 chars as key
+            if content_key in seen_content:
+                continue
+            seen_content.add(content_key)
+            
+            cleaned_lines.append(line)
         
         return '\n'.join(cleaned_lines)
     

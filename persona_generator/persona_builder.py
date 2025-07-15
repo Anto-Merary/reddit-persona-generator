@@ -531,16 +531,17 @@ Format as: Extraversion: X, Sensing: Y, Thinking: Z, Judging: W"""
     
     def _build_behavior(self, context: str) -> Dict:
         """Build behavior aspect of persona."""
-        prompt = f"""You are analyzing a Reddit user's actual behavioral patterns. Based on this user analysis, describe their SPECIFIC behaviors:
+        prompt = f"""Based on this Reddit user's actual behavior patterns, describe their specific behaviors. Be concise and avoid repetition.
 
 {context}
 
-Generate 3-5 specific behavioral patterns this user actually exhibits:"""
+List exactly 3-4 distinct behavioral patterns this user exhibits based on their Reddit activity:
+1."""
         
-        response = self.llm_handler.generate_text(prompt, max_length=300)
+        response = self.llm_handler.generate_text(prompt, max_length=250)
         
         # Parse response into behavior items
-        behaviors = self._parse_list_response(response)
+        behaviors = self._parse_numbered_response(response)
         
         # Add context-based behaviors if needed
         if len(behaviors) < 3:
@@ -551,16 +552,17 @@ Generate 3-5 specific behavioral patterns this user actually exhibits:"""
     
     def _build_frustrations(self, context: str) -> Dict:
         """Build frustrations aspect of persona."""
-        prompt = f"""You are analyzing a Reddit user's actual frustrations from their behavior patterns. Based on this user analysis, identify their REAL frustrations:
+        prompt = f"""Based on this Reddit user's actual behavior patterns, identify their specific frustrations. Be concise and avoid repetition.
 
 {context}
 
-Generate 3-5 specific frustrations this user actually faces:"""
+List exactly 3-4 distinct frustrations this user faces based on their Reddit activity:
+1."""
         
-        response = self.llm_handler.generate_text(prompt, max_length=300)
+        response = self.llm_handler.generate_text(prompt, max_length=250)
         
         # Parse response into frustration items
-        frustrations = self._parse_list_response(response)
+        frustrations = self._parse_numbered_response(response)
         
         # Add context-based frustrations if needed
         if len(frustrations) < 3:
@@ -571,16 +573,17 @@ Generate 3-5 specific frustrations this user actually faces:"""
     
     def _build_goals(self, context: str) -> Dict:
         """Build goals aspect of persona."""
-        prompt = f"""You are analyzing a Reddit user's actual goals from their behavior patterns. Based on this user analysis, identify their REAL goals and needs:
+        prompt = f"""Based on this Reddit user's actual behavior patterns, identify their specific goals and needs. Be concise and avoid repetition.
 
 {context}
 
-Generate 3-5 specific goals this user is actually working toward:"""
+List exactly 3-4 distinct goals this user is working toward based on their Reddit activity:
+1."""
         
-        response = self.llm_handler.generate_text(prompt, max_length=300)
+        response = self.llm_handler.generate_text(prompt, max_length=250)
         
         # Parse response into goal items
-        goals = self._parse_list_response(response)
+        goals = self._parse_numbered_response(response)
         
         # Add context-based goals if needed
         if len(goals) < 3:
@@ -631,6 +634,71 @@ Generate ONE authentic quote (8-15 words, natural and conversational):"""
                 elif line and len(items) < 5:
                     items.append(line)
         return items
+    
+    def _parse_numbered_response(self, response: str) -> List[str]:
+        """Parse numbered response from LLM with enhanced artifact filtering."""
+        items = []
+        if not response:
+            return items
+        
+        # First, add the initial "1." if it exists
+        if response.strip():
+            response = "1. " + response.strip()
+        
+        # Split into lines and process
+        lines = response.split('\n')
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+                
+            # Check for numbered items (1., 2., 3., etc.)
+            if line and any(line.startswith(f"{i}.") for i in range(1, 10)):
+                # Extract content after the number
+                content = line[2:].strip()
+                if content and self._is_valid_content(content):
+                    items.append(content)
+            # Check for bullet points as fallback
+            elif line and (line.startswith('•') or line.startswith('-') or line.startswith('*')):
+                content = line.lstrip('•-* ').strip()
+                if content and self._is_valid_content(content):
+                    items.append(content)
+            # Check for plain text items if we don't have many items yet
+            elif line and len(items) < 3 and self._is_valid_content(line):
+                items.append(line)
+        
+        return items[:5]
+    
+    def _is_valid_content(self, content: str) -> bool:
+        """Check if content is valid and not an artifact."""
+        if not content or len(content) < 10:
+            return False
+        
+        # Check for common artifacts
+        artifacts = [
+            'generate', 'create', 'based on', 'analysis', 'user would',
+            'this captures', 'represents', 'reflects', 'critical instructions',
+            'format as', 'consider the following', 'detailed analysis',
+            'evidence from', 'specific frustrations', 'behavioral patterns',
+            'working toward', 'actually faces', 'exhibits based'
+        ]
+        
+        content_lower = content.lower()
+        if any(artifact in content_lower for artifact in artifacts):
+            return False
+        
+        # Check for excessive repetition
+        words = content.split()
+        if len(words) > 3:
+            word_counts = {}
+            for word in words:
+                word_counts[word] = word_counts.get(word, 0) + 1
+            
+            # If any word appears more than 2 times in a short sentence, it's likely repetitive
+            if any(count > 2 for count in word_counts.values()):
+                return False
+        
+        return True
     
     def _infer_behaviors_from_context(self, context: str) -> List[str]:
         """Infer behaviors from context patterns."""
