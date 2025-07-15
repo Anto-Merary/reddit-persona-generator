@@ -14,8 +14,8 @@ Features:
 - Flask API with web interface support
 - Comprehensive error handling and edge case management
 
-Author: AI/LLM Engineer Intern
-Date: 2024
+Author: Anto Merary S
+Date: 2025
 """
 
 import os
